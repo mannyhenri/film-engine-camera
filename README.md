@@ -1,10 +1,10 @@
-# Film Engine Camera · v0.3 field build
+# Film Engine Camera · v0.3.1 phone-test build
 
-**Uncompiled source, untested on iPhone. No guarantee of ProRes/HDR support.**
+**iPhone SDK build verified with Xcode 26.1. Physical-device recording remains untested.**
 
 New: manual ISO/shutter/focus/WB/zoom, experimental nondestructive Core Image monitoring, look recipes, slate metadata sidecar, composition guides and full field test checklist.
 
-# Film Engine Camera · MVP 0.2 Alpha
+## Camera prototype
 
 Native iPhone camera prototype using SwiftUI and AVFoundation. Focus: real device capability negotiation for HDR / ProRes recording, and on-device inspection of saved footage.
 
@@ -19,9 +19,12 @@ Unsupported profiles are omitted from the picker. Nothing is silently downgraded
 
 ## Build on macOS
 
-1. Install Xcode and XcodeGen (`brew install xcodegen`).
-2. Run `xcodegen generate` in this directory.
-3. Open `FilmEngineCamera.xcodeproj`, assign your Apple development team and unique bundle ID.
+1. Open the included `FilmEngineCamera.xcodeproj` in Xcode.
+2. Sign in under Xcode → Settings → Accounts with access to the Gridlight development team. Automatic signing uses team `3AXRJ22S9P`; choose your own team if building independently.
+3. Select the FilmEngineCamera target, confirm automatic signing, and select your connected iPhone. The app has its own bundle ID, `ai.gridlight.filmenginecamera`.
+
+If editing `project.yml`, regenerate with XcodeGen (`brew install xcodegen`, then `xcodegen generate`). Keep the generated project committed.
+
 4. Run on a real compatible iPhone (camera will not function in Simulator).
 5. Review selected sensor dimensions/format and profile in the live overlay.
 6. Record a short take; review **FILE** inspection text showing codec and color tags.
@@ -38,10 +41,20 @@ Unsupported profiles are omitted from the picker. Nothing is silently downgraded
 
 ## Known limitations
 
-This build has **not been compiled or run on an iPhone** in this environment. It is an alpha implementation, not proven production recording. `AVCaptureMovieFileOutput` has platform/version-dependent HDR behavior. Apple Log preview can appear flat; monitor-grade LUTs/Metal grading are future work. Rotation, backgrounding, storage safeguards, locked exposure and full codec/bit-depth verification are not complete. For a guaranteed high-value shoot, use an established camera app until validated.
+This build **compiles for iPhone**, but has not yet been installed or run on a physical device. The current Mac needs an Xcode account sign-in and an updated development provisioning profile before installation. It is an alpha implementation, not proven production recording. `AVCaptureMovieFileOutput` has platform/version-dependent HDR behavior. Apple Log preview can appear flat; monitor-grade LUTs/Metal grading are future work. Rotation, backgrounding, storage safeguards, locked exposure and full codec/bit-depth verification are not complete. For a guaranteed high-value shoot, use an established camera app until validated.
 
 ## Apple references
 
 - [TN3104 ProRes recording](https://developer.apple.com/documentation/technotes/tn3104-recording-video-in-apple-prores)
 - [Movie output available codecs](https://developer.apple.com/documentation/avfoundation/avcapturemoviefileoutput/availablevideocodectypes)
 - [Capture color spaces](https://developer.apple.com/documentation/avfoundation/avcapturecolorspace)
+
+## Build verification — November 1, 2026
+
+- Xcode 26.1, Debug, generic iOS device: build passed without Swift source warnings.
+- Fixed Swift language mode, generated project, Photos permission, file sharing and version settings.
+- Isolated capture hardware on its serial queue; UI state remains on the main actor.
+- Debounced record taps, captured slate metadata before recording, restored the previous profile after failed configuration, and checked manual-control capabilities.
+- Signed device build is pending Apple account/provisioning setup. HDR, ProRes, audio, Photos export and interruption handling still require the field tests below.
+
+See [the phone checklist](docs/TEST-TOMORROW.md).

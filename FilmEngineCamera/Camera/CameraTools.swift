@@ -9,14 +9,17 @@ struct ManualExposure: Equatable {
 
 extension CameraController {
     func setExposure(iso: Float, shutterDenominator: Int32) {
-        guard !isRecording else { return }
+        guard isReady, !isRecording, !isConfiguring else { return }
         sessionQueue.async { [weak self] in
-            guard let self, let device = self.videoDevice else { return }
+            guard let self, let device = self.capture.videoDevice else { return }
             do {
                 try device.lockForConfiguration()
+                defer { device.unlockForConfiguration() }
+                guard device.isExposureModeSupported(.custom), shutterDenominator > 0 else { return }
                 let clampedISO = max(device.activeFormat.minISO, min(device.activeFormat.maxISO, iso))
-                device.setExposureModeCustom(duration: CMTime(value: 1, timescale: shutterDenominator), iso: clampedISO)
-                device.unlockForConfiguration()
+                let requested = CMTime(value: 1, timescale: shutterDenominator)
+                let duration = CMTimeMaximum(device.activeFormat.minExposureDuration, CMTimeMinimum(device.activeFormat.maxExposureDuration, requested))
+                device.setExposureModeCustom(duration: duration, iso: clampedISO)
                 Task { @MainActor in
                     self.manualExposure = ManualExposure(iso: clampedISO, shutterDenominator: shutterDenominator, locked: true)
                 }
@@ -25,9 +28,9 @@ extension CameraController {
     }
 
     func setAutoExposure() {
-        guard !isRecording else { return }
+        guard isReady, !isRecording, !isConfiguring else { return }
         sessionQueue.async { [weak self] in
-            guard let self, let device = self.videoDevice else { return }
+            guard let self, let device = self.capture.videoDevice else { return }
             do {
                 try device.lockForConfiguration()
                 if device.isExposureModeSupported(.continuousAutoExposure) { device.exposureMode = .continuousAutoExposure }
@@ -38,9 +41,9 @@ extension CameraController {
     }
 
     func setWhiteBalance(kelvin: Float) {
-        guard !isRecording else { return }
+        guard isReady, !isRecording, !isConfiguring else { return }
         sessionQueue.async { [weak self] in
-            guard let self, let device = self.videoDevice else { return }
+            guard let self, let device = self.capture.videoDevice, device.isWhiteBalanceModeSupported(.locked) else { return }
             do {
                 try device.lockForConfiguration()
                 let gains = device.deviceWhiteBalanceGains(for: AVCaptureDevice.WhiteBalanceTemperatureAndTintValues(temperature: kelvin, tint: 0))
@@ -54,12 +57,12 @@ extension CameraController {
     }
 
     func setFocus(_ normalizedLensPosition: Float) {
-        guard !isRecording else { return }
+        guard isReady, !isRecording, !isConfiguring else { return }
         sessionQueue.async { [weak self] in
-            guard let self, let device = self.videoDevice, device.isFocusModeSupported(.locked) else { return }
+            guard let self, let device = self.capture.videoDevice, device.isFocusModeSupported(.locked), device.isLockingFocusWithCustomLensPositionSupported else { return }
             do {
                 try device.lockForConfiguration()
-                device.setFocusModeLocked(lensPosition: normalizedLensPosition)
+                device.setFocusModeLocked(lensPosition: min(1, max(0, normalizedLensPosition)))
                 device.unlockForConfiguration()
                 Task { @MainActor in self.focusPosition = normalizedLensPosition }
             } catch { Task { @MainActor in self.status = "Focus adjustment failed" } }
@@ -67,8 +70,9 @@ extension CameraController {
     }
 
     func setZoom(_ factor: CGFloat) {
+        guard isReady, !isRecording, !isConfiguring else { return }
         sessionQueue.async { [weak self] in
-            guard let self, let device = self.videoDevice else { return }
+            guard let self, let device = self.capture.videoDevice else { return }
             do {
                 try device.lockForConfiguration()
                 let target = min(device.activeFormat.videoMaxZoomFactor, max(1, factor))

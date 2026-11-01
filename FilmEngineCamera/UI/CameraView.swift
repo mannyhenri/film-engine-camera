@@ -195,7 +195,7 @@ private struct LookSheet: View {
                     Toggle("Enable experimental live monitor", isOn: $camera.monitoringEnabled)
                     Picker("Preset", selection: $camera.filmLook.name) {
                         ForEach(["Cinematic Neutral", "Tungsten Night", "Soft Negative"], id: \.self) { Text($0).tag($0) }
-                    }.onChange(of: camera.filmLook.name) { name in
+                    }.onChange(of: camera.filmLook.name) { _, name in
                         switch name {
                         case "Tungsten Night": camera.filmLook = .tungsten
                         case "Soft Negative": camera.filmLook = .soft

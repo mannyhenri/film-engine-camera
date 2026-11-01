@@ -1,0 +1,356 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		116FBFDCCF8450AD0A08835E /* RecordingProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88F61D078084B1B5F70C48A8 /* RecordingProfile.swift */; };
+		1E8F3BCD45A737982FB3504F /* CameraTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61B19F399CCC7C5B34013101 /* CameraTools.swift */; };
+		28BA7DD82F4BD9822226109E /* CameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6D217468FB3747CD28E68E8 /* CameraController.swift */; };
+		2EFC0EBBDB0875B51812017C /* ShotMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F19A178EBA47614FE51CF5 /* ShotMetadata.swift */; };
+		30CCA4939EBF03ACAAD74E2C /* FilmLook.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19A122C03F103B2951AAF72B /* FilmLook.swift */; };
+		877565DAF4CF2D1103E21CC3 /* FilmEngineCameraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29C8593354EA496F81166B31 /* FilmEngineCameraApp.swift */; };
+		E1C1FA803DAF1BF90A7DF073 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7C0D8BAB6D5893B13A4D7 /* CameraView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		12F19A178EBA47614FE51CF5 /* ShotMetadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotMetadata.swift; sourceTree = "<group>"; };
+		19A122C03F103B2951AAF72B /* FilmLook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmLook.swift; sourceTree = "<group>"; };
+		26E9DFF594B837BD1063CB08 /* FilmEngineCamera.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FilmEngineCamera.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		29C8593354EA496F81166B31 /* FilmEngineCameraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmEngineCameraApp.swift; sourceTree = "<group>"; };
+		572870856124DD889836E550 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		61B19F399CCC7C5B34013101 /* CameraTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraTools.swift; sourceTree = "<group>"; };
+		88F61D078084B1B5F70C48A8 /* RecordingProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingProfile.swift; sourceTree = "<group>"; };
+		A6F7C0D8BAB6D5893B13A4D7 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
+		C6D217468FB3747CD28E68E8 /* CameraController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraController.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0E6D10ECD2101AF2D514767B /* Looks */ = {
+			isa = PBXGroup;
+			children = (
+				19A122C03F103B2951AAF72B /* FilmLook.swift */,
+			);
+			path = Looks;
+			sourceTree = "<group>";
+		};
+		2824923EE01706B257E35651 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				26E9DFF594B837BD1063CB08 /* FilmEngineCamera.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		460CBC0E69D4DAFC3A37BB06 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				A6F7C0D8BAB6D5893B13A4D7 /* CameraView.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		51060017A252DDAD256A699D = {
+			isa = PBXGroup;
+			children = (
+				74933D4881C299E3BEC91C3D /* FilmEngineCamera */,
+				2824923EE01706B257E35651 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		74933D4881C299E3BEC91C3D /* FilmEngineCamera */ = {
+			isa = PBXGroup;
+			children = (
+				29C8593354EA496F81166B31 /* FilmEngineCameraApp.swift */,
+				572870856124DD889836E550 /* Info.plist */,
+				F850B084224C70239BA190E8 /* Camera */,
+				0E6D10ECD2101AF2D514767B /* Looks */,
+				C0764517435DACA47D0DE13D /* Production */,
+				460CBC0E69D4DAFC3A37BB06 /* UI */,
+			);
+			path = FilmEngineCamera;
+			sourceTree = "<group>";
+		};
+		C0764517435DACA47D0DE13D /* Production */ = {
+			isa = PBXGroup;
+			children = (
+				12F19A178EBA47614FE51CF5 /* ShotMetadata.swift */,
+			);
+			path = Production;
+			sourceTree = "<group>";
+		};
+		F850B084224C70239BA190E8 /* Camera */ = {
+			isa = PBXGroup;
+			children = (
+				C6D217468FB3747CD28E68E8 /* CameraController.swift */,
+				61B19F399CCC7C5B34013101 /* CameraTools.swift */,
+				88F61D078084B1B5F70C48A8 /* RecordingProfile.swift */,
+			);
+			path = Camera;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		34C7EF80C10CCC82CF39DE29 /* FilmEngineCamera */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CC140307899682C1C8F7E75F /* Build configuration list for PBXNativeTarget "FilmEngineCamera" */;
+			buildPhases = (
+				ECBC55FEB74501915452B9C4 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FilmEngineCamera;
+			packageProductDependencies = (
+			);
+			productName = FilmEngineCamera;
+			productReference = 26E9DFF594B837BD1063CB08 /* FilmEngineCamera.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		26D5F9CB51CF43ED398E17A3 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					34C7EF80C10CCC82CF39DE29 = {
+						DevelopmentTeam = 3AXRJ22S9P;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 9844AB3FAE3D1B442B5486FA /* Build configuration list for PBXProject "FilmEngineCamera" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 51060017A252DDAD256A699D;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 2824923EE01706B257E35651 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				34C7EF80C10CCC82CF39DE29 /* FilmEngineCamera */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		ECBC55FEB74501915452B9C4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				28BA7DD82F4BD9822226109E /* CameraController.swift in Sources */,
+				1E8F3BCD45A737982FB3504F /* CameraTools.swift in Sources */,
+				E1C1FA803DAF1BF90A7DF073 /* CameraView.swift in Sources */,
+				877565DAF4CF2D1103E21CC3 /* FilmEngineCameraApp.swift in Sources */,
+				30CCA4939EBF03ACAAD74E2C /* FilmLook.swift in Sources */,
+				116FBFDCCF8450AD0A08835E /* RecordingProfile.swift in Sources */,
+				2EFC0EBBDB0875B51812017C /* ShotMetadata.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		8CB7D51A4F5A69E6011956A4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		ACA092EF8D0D0BE8FA791761 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = 3AXRJ22S9P;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FilmEngineCamera/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.3.1;
+				PRODUCT_BUNDLE_IDENTIFIER = ai.gridlight.filmenginecamera;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BD7CBB97030ABA7B36CB54CF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		E4956A48C49054AABE2F419D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = 3AXRJ22S9P;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FilmEngineCamera/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.3.1;
+				PRODUCT_BUNDLE_IDENTIFIER = ai.gridlight.filmenginecamera;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9844AB3FAE3D1B442B5486FA /* Build configuration list for PBXProject "FilmEngineCamera" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8CB7D51A4F5A69E6011956A4 /* Debug */,
+				BD7CBB97030ABA7B36CB54CF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CC140307899682C1C8F7E75F /* Build configuration list for PBXNativeTarget "FilmEngineCamera" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				ACA092EF8D0D0BE8FA791761 /* Debug */,
+				E4956A48C49054AABE2F419D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 26D5F9CB51CF43ED398E17A3 /* Project object */;
+}

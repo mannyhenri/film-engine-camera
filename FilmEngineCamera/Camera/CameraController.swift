@@ -3,6 +3,17 @@ import Photos
 import SwiftUI
 import CoreImage
 
+// Capture objects are accessed only on queue, apart from attaching session to the
+// preview layer. UI state stays on CameraController's main actor.
+final class CaptureHardware: @unchecked Sendable {
+    let queue = DispatchQueue(label: "ai.gridlight.camera.session")
+    let session = AVCaptureSession()
+    let movieOutput = AVCaptureMovieFileOutput()
+    let monitorOutput = AVCaptureVideoDataOutput()
+    let monitorQueue = DispatchQueue(label: "ai.gridlight.camera.monitor", qos: .userInitiated)
+    var videoDevice: AVCaptureDevice?
+}
+
 @MainActor
 final class CameraController: NSObject, ObservableObject {
     @Published var isRecording = false
@@ -25,15 +36,12 @@ final class CameraController: NSObject, ObservableObject {
     @Published var metadata = ShotMetadata()
     @Published var monitoringStatus = "Monitor off"
     private var pendingMetadata = ShotMetadata()
-    private let monitorOutput = AVCaptureVideoDataOutput()
-    private let monitorQueue = DispatchQueue(label: "ai.gridlight.camera.monitor", qos: .userInitiated)
     private let monitorContext = CIContext(options: [.useSoftwareRenderer: false])
     private var monitorCounter = 0
 
-    let session = AVCaptureSession()
-    let sessionQueue = DispatchQueue(label: "ai.gridlight.camera.session")
-    private let movieOutput = AVCaptureMovieFileOutput()
-    var videoDevice: AVCaptureDevice?
+    nonisolated let capture = CaptureHardware()
+    nonisolated var session: AVCaptureSession { capture.session }
+    nonisolated var sessionQueue: DispatchQueue { capture.queue }
     private var timer: Timer?
     private var configured = false
 
@@ -69,16 +77,15 @@ final class CameraController: NSObject, ObservableObject {
                     let mic = try AVCaptureDeviceInput(device: microphone)
                     if self.session.canAddInput(mic) { self.session.addInput(mic) }
                 }
-                guard self.session.canAddOutput(self.movieOutput) else { throw CameraError.unsupported("Movie output unavailable") }
-                self.session.addOutput(self.movieOutput)
-                self.movieOutput.movieFragmentInterval = CMTime(seconds: 2, preferredTimescale: 600)
-                self.videoDevice = device
+                guard self.session.canAddOutput(self.capture.movieOutput) else { throw CameraError.unsupported("Movie output unavailable") }
+                self.session.addOutput(self.capture.movieOutput)
+                self.capture.movieOutput.movieFragmentInterval = CMTime(seconds: 2, preferredTimescale: 600)
+                self.capture.videoDevice = device
                 // Optional sample buffers for a low-fps creative monitor.
                 // Full-resolution file capture is independent from this preview.
-                self.monitorOutput.alwaysDiscardsLateVideoFrames = true
-                self.monitorOutput.setSampleBufferDelegate(self, queue: self.monitorQueue)
-                if self.session.canAddOutput(self.monitorOutput) { self.session.addOutput(self.monitorOutput) }
-                self.configured = true
+                self.capture.monitorOutput.alwaysDiscardsLateVideoFrames = true
+                self.capture.monitorOutput.setSampleBufferDelegate(self, queue: self.capture.monitorQueue)
+                if self.session.canAddOutput(self.capture.monitorOutput) { self.session.addOutput(self.capture.monitorOutput) }
                 // A mode is advertised only after both format and codec negotiation succeeds.
                 let supported = RecordingProfile.allCases.filter { self.install($0, on: device) != nil }
                 let preferred: RecordingProfile = supported.contains(.hevcHLG) ? .hevcHLG : .sdr
@@ -88,6 +95,7 @@ final class CameraController: NSObject, ObservableObject {
                 self.session.commitConfiguration()
                 self.session.startRunning()
                 Task { @MainActor in
+                    self.configured = true
                     self.profiles = supported
                     self.selectedProfile = preferred
                     self.captureDetails = details
@@ -96,6 +104,9 @@ final class CameraController: NSObject, ObservableObject {
                     self.status = micGranted ? "Ready to record" : "Ready · microphone permission denied"
                 }
             } catch {
+                for input in self.session.inputs { self.session.removeInput(input) }
+                for output in self.session.outputs { self.session.removeOutput(output) }
+                self.capture.videoDevice = nil
                 self.session.commitConfiguration()
                 Task { @MainActor in
                     self.isConfiguring = false
@@ -106,9 +117,9 @@ final class CameraController: NSObject, ObservableObject {
     }
 
     /// Runs only on sessionQueue. Returns nil instead of quietly selecting another profile.
-    private func install(_ profile: RecordingProfile, on device: AVCaptureDevice) -> String? {
+    nonisolated private func install(_ profile: RecordingProfile, on device: AVCaptureDevice) -> String? {
         guard let choice = FormatSelector.select(for: device, profile: profile),
-              let connection = movieOutput.connection(with: .video) else { return nil }
+              let connection = capture.movieOutput.connection(with: .video) else { return nil }
         do {
             try device.lockForConfiguration()
             device.activeFormat = choice.format
@@ -116,11 +127,11 @@ final class CameraController: NSObject, ObservableObject {
             device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 24)
             device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 24)
             device.unlockForConfiguration()
-            guard movieOutput.availableVideoCodecTypes.contains(profile.codec) else { return nil }
+            guard capture.movieOutput.availableVideoCodecTypes.contains(profile.codec) else { return nil }
             // iOS allows only keys returned by supportedOutputSettingsKeys(for:).
-            guard movieOutput.supportedOutputSettingsKeys(for: connection).contains(AVVideoCodecKey) else { return nil }
-            movieOutput.setOutputSettings([AVVideoCodecKey: profile.codec.rawValue], for: connection)
-            let active = movieOutput.outputSettings(for: connection)[AVVideoCodecKey] as? String
+            guard capture.movieOutput.supportedOutputSettingsKeys(for: connection).contains(AVVideoCodecKey) else { return nil }
+            capture.movieOutput.setOutputSettings([AVVideoCodecKey: profile.codec.rawValue], for: connection)
+            let active = capture.movieOutput.outputSettings(for: connection)[AVVideoCodecKey] as? String
             guard active == profile.codec.rawValue, device.activeColorSpace == profile.colorSpace else { return nil }
             return "\(choice.width)×\(choice.height) · 24 fps · \(profile.rawValue) · sensor \(fourCC(choice.pixelSubtype))"
         } catch { return nil }
@@ -130,14 +141,16 @@ final class CameraController: NSObject, ObservableObject {
         guard isReady, !isRecording, !isConfiguring, profiles.contains(profile) else { return }
         isConfiguring = true
         isReady = false
+        let previous = selectedProfile
         sessionQueue.async { [weak self] in
-            guard let self, let device = self.videoDevice else { return }
+            guard let self, let device = self.capture.videoDevice else { return }
             self.session.beginConfiguration()
             let details = self.install(profile, on: device)
+            let restored = details == nil ? self.install(previous, on: device) : nil
             self.session.commitConfiguration()
             Task { @MainActor in
                 self.isConfiguring = false
-                self.isReady = true
+                self.isReady = details != nil || restored != nil
                 if let details {
                     self.selectedProfile = profile
                     self.captureDetails = details
@@ -151,21 +164,20 @@ final class CameraController: NSObject, ObservableObject {
 
     func toggleRecording() {
         guard isReady, !isConfiguring else { return }
+        isConfiguring = true // Debounce taps until the delegate confirms start/finish.
         if isRecording {
-            sessionQueue.async { [weak self] in self?.movieOutput.stopRecording() }
+            sessionQueue.async { [weak self] in self?.capture.movieOutput.stopRecording() }
         } else {
+            var shot = metadata
+            shot.capturedAt = Date()
+            shot.requestedProfile = selectedProfile.rawValue
+            shot.filmLook = filmLook
+            pendingMetadata = shot
             sessionQueue.async { [weak self] in
                 guard let self else { return }
                 let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
                 let url = folder.appendingPathComponent("FEC-\(UUID().uuidString).mov")
-                Task { @MainActor in
-                    var shot = self.metadata
-                    shot.capturedAt = Date()
-                    shot.requestedProfile = self.selectedProfile.rawValue
-                    shot.filmLook = self.filmLook
-                    self.pendingMetadata = shot
-                }
-                self.movieOutput.startRecording(to: url, recordingDelegate: self)
+                self.capture.movieOutput.startRecording(to: url, recordingDelegate: self)
             }
         }
     }
@@ -186,6 +198,7 @@ final class CameraController: NSObject, ObservableObject {
 
     private func recordingStarted() {
         isRecording = true
+        isConfiguring = false
         recordSeconds = 0
         status = "Recording \(selectedProfile.rawValue)"
         timer?.invalidate()
@@ -197,10 +210,13 @@ final class CameraController: NSObject, ObservableObject {
     private func recordingFinished(url: URL, error: Error?) {
         timer?.invalidate(); timer = nil
         isRecording = false
-        if let error { status = "Recording failed: \(error.localizedDescription)"; return }
+        isConfiguring = false
+        if let error, (error as NSError).userInfo[AVErrorRecordingSuccessfullyFinishedKey] as? Bool != true { status = "Recording failed: \(error.localizedDescription)"; return }
         lastFile = url
         status = "Take saved to app Documents"
         inspection = "Inspecting saved track…"
+        let completedMetadata = pendingMetadata
+        metadata.take += 1
         Task {
             do {
                 let asset = AVURLAsset(url: url)
@@ -214,11 +230,10 @@ final class CameraController: NSObject, ObservableObject {
                 let transfer = String(describing: extensions[String(describing: kCMFormatDescriptionExtension_TransferFunction)] ?? "not tagged")
                 let size = try await track.load(.naturalSize)
                 inspection = "FILE: \(Int(size.width))×\(Int(size.height)) | codec \(codec) | primaries \(primaries) | transfer \(transfer)"
-                var sidecar = pendingMetadata
+                var sidecar = completedMetadata
                 sidecar.detectedFileProperties = inspection
                 do { _ = try ShotSidecar.save(sidecar, alongside: url) }
                 catch { status = "MOV saved but JSON metadata failed: \(error.localizedDescription)" }
-                metadata.take += 1
             } catch {
                 inspection = "Could not inspect file: \(error.localizedDescription)"
             }
