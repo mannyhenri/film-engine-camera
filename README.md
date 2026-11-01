@@ -45,7 +45,7 @@ See [phone tests](docs/TEST-TOMORROW.md). Apple Log 2, ProRes RAW, scopes, focus
 
 ## v0.4.1 refinements
 
-The app uses Film Engine's blue filmstrip icon and the name FE Camera. The top bar has its own inset and spacing from the side controls; portrait controls are centered around Record. The counter shows elapsed non-drop-frame HH:MM:SS:frames from AVCaptureMovieFileOutput.recordedDuration (three frame digits at 120 fps). It is an elapsed recording display, not externally synchronized production timecode.
+The app uses Film Engine's blue folded-ribbon F icon, extracted from `electron/icon.icns` and the name FE Camera. The top bar has its own inset and spacing from the side controls; portrait controls are centered around Record. The counter shows elapsed non-drop-frame HH:MM:SS:frames from AVCaptureMovieFileOutput.recordedDuration (three frame digits at 120 fps). It is an elapsed recording display, not externally synchronized production timecode.
 
 Guides supports 16:9, 1.85:1, 2:1, 2.39:1, 4:3, 1:1, 4:5 and 9:16. Selection persists and is captured in slate metadata. Guides do not crop the original recording.
 

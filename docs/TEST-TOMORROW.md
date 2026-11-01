@@ -16,7 +16,7 @@ Retrieve the untouched MOV from Files or Film Engine for codec/bit-depth verific
 
 ## v0.4.1 follow-up
 
-- Confirm the Home Screen says FE Camera and shows the blue filmstrip icon.
+- Confirm the Home Screen says FE Camera and shows the blue folded-ribbon F icon.
 - Check top-bar separation and centered portrait Record control.
 - Choose each Guides aspect ratio; confirm the selected ratio persists and is saved in the next slate. The original MOV is not cropped.
 - Record past one minute and confirm HH:MM:SS:frames rolls over properly.
