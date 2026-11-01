@@ -25,6 +25,7 @@ final class CameraController: NSObject, ObservableObject {
     @Published var captureDetails = "Checking sensor formats…"
     @Published var inspection = "No take to inspect"
     @Published var recordSeconds = 0
+    @Published var recordTimecode = "00:00:00:00"
     @Published var lastFile: URL?
     @Published var manualExposure = ManualExposure()
     @Published var whiteBalanceKelvin: Float = 5600
@@ -244,11 +245,22 @@ final class CameraController: NSObject, ObservableObject {
         isRecording = true
         isConfiguring = false
         recordSeconds = 0
+        recordTimecode = "00:00:00:00"
         status = "Recording \(selectedProfile.rawValue)"
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.recordSeconds += 1 }
+        let rate = fps
+        timer = Timer(timeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            self.sessionQueue.async {
+                let seconds = CMTimeGetSeconds(self.capture.movieOutput.recordedDuration)
+                guard seconds.isFinite, seconds >= 0 else { return }
+                Task { @MainActor in
+                    self.recordSeconds = Int(seconds)
+                    self.recordTimecode = RecordingTimecode.format(seconds: seconds, fps: rate)
+                }
+            }
         }
+        if let timer { RunLoop.main.add(timer, forMode: .common) }
     }
 
     private func recordingFinished(url: URL, error: Error?) {

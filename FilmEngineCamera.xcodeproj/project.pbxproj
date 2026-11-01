@@ -18,6 +18,7 @@
 		3DF8EB378515A34073112540 /* CaptureOrientation.swift in Sources */ = {isa = PBXBuildFile; fileRef = E19223681C6A0649D7BB4F8E /* CaptureOrientation.swift */; };
 		877565DAF4CF2D1103E21CC3 /* FilmEngineCameraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29C8593354EA496F81166B31 /* FilmEngineCameraApp.swift */; };
 		A9F7672A7BEB1B4A6646B3AD /* FilmEngineConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27B7BFB679E85E9B191B36AC /* FilmEngineConnection.swift */; };
+		C66CBB0502C49F452D52C438 /* RecordingTimecode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9791E51D017E9CEC34917A49 /* RecordingTimecode.swift */; };
 		E1C1FA803DAF1BF90A7DF073 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F7C0D8BAB6D5893B13A4D7 /* CameraView.swift */; };
 /* End PBXBuildFile section */
 
@@ -31,6 +32,7 @@
 		61B19F399CCC7C5B34013101 /* CameraTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraTools.swift; sourceTree = "<group>"; };
 		63AADAD96F6B205A1EFC69B8 /* ClipLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipLibrary.swift; sourceTree = "<group>"; };
 		88F61D078084B1B5F70C48A8 /* RecordingProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingProfile.swift; sourceTree = "<group>"; };
+		9791E51D017E9CEC34917A49 /* RecordingTimecode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingTimecode.swift; sourceTree = "<group>"; };
 		98AD86869907241F4728557B /* MonitorRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitorRenderer.swift; sourceTree = "<group>"; };
 		A6F7C0D8BAB6D5893B13A4D7 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		C6D217468FB3747CD28E68E8 /* CameraController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraController.swift; sourceTree = "<group>"; };
@@ -111,6 +113,7 @@
 				E19223681C6A0649D7BB4F8E /* CaptureOrientation.swift */,
 				98AD86869907241F4728557B /* MonitorRenderer.swift */,
 				88F61D078084B1B5F70C48A8 /* RecordingProfile.swift */,
+				9791E51D017E9CEC34917A49 /* RecordingTimecode.swift */,
 			);
 			path = Camera;
 			sourceTree = "<group>";
@@ -196,6 +199,7 @@
 				30CCA4939EBF03ACAAD74E2C /* FilmLook.swift in Sources */,
 				2F3B8181F871F2E17CB9FACC /* MonitorRenderer.swift in Sources */,
 				116FBFDCCF8450AD0A08835E /* RecordingProfile.swift in Sources */,
+				C66CBB0502C49F452D52C438 /* RecordingTimecode.swift in Sources */,
 				2EFC0EBBDB0875B51812017C /* ShotMetadata.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -274,7 +278,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = W7QXFS7XBU;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = FilmEngineCamera/Info.plist;
@@ -282,7 +286,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.4.0;
+				MARKETING_VERSION = 0.4.1;
 				PRODUCT_BUNDLE_IDENTIFIER = ai.gridlight.filmenginecamera;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -353,7 +357,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = W7QXFS7XBU;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = FilmEngineCamera/Info.plist;
@@ -361,7 +365,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.4.0;
+				MARKETING_VERSION = 0.4.1;
 				PRODUCT_BUNDLE_IDENTIFIER = ai.gridlight.filmenginecamera;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;

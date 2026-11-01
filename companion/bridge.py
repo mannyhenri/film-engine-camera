@@ -28,11 +28,14 @@ class BridgeServer(ThreadingHTTPServer):
 class Handler(BaseHTTPRequestHandler):
     def reply(self, status, payload):
         data = json.dumps(payload).encode()
-        self.send_response(status)
-        self.send_header('Content-Type','application/json')
-        self.send_header('Content-Length',str(len(data)))
-        self.end_headers()
-        self.wfile.write(data)
+        try:
+            self.send_response(status)
+            self.send_header('Content-Type','application/json')
+            self.send_header('Content-Length',str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+        except (BrokenPipeError, ConnectionResetError):
+            self.log_message('Client disconnected before reading response %s', status)
     def authorized(self):
         expected = 'Bearer ' + self.server.config['token']
         if not hmac.compare_digest(self.headers.get('Authorization',''), expected):
@@ -55,7 +58,10 @@ class Handler(BaseHTTPRequestHandler):
         partial = None
         try:
             project, name = match.groups()
+            if not self.headers.get('Content-Length'):
+                raise ValueError('Missing upload size. Update FE Camera and retry this clip.')
             size = int(self.headers.get('Content-Length','0'))
+            self.log_message('Receiving %s: %s bytes', name, size)
             if size <= 0 or size > 64 * 1024**3: raise ValueError('A clip must be between 1 byte and 64 GB.')
             encoded = self.headers.get('X-Camera-Metadata','')
             if len(encoded) > 32768: raise ValueError('Slate metadata is too large.')
@@ -110,8 +116,12 @@ class Handler(BaseHTTPRequestHandler):
         except HTTPError as error:
             self.reply(502, {'error':'Film Engine rejected the destination or asset registration. Local footage is retained; retry after checking the project.'})
         except (ValueError, StopIteration) as error:
+            self.log_message("Upload refused: %s", str(error))
             self.reply(400, {'error':str(error) or 'Project has no Clips folder.'})
+        except (ConnectionResetError, BrokenPipeError, TimeoutError):
+            self.log_message("Upload interrupted by the phone or a network timeout; original remains on phone")
         except Exception as error:
+            self.log_message("Upload failed: %s", str(error))
             self.reply(500, {'error':'Transfer could not finish: ' + str(error)})
         finally:
             if partial and os.path.exists(partial): os.unlink(partial)

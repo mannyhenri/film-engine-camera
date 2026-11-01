@@ -1,4 +1,4 @@
-# Film Engine Camera · v0.4
+# FE Camera · v0.4.1
 
 Native SwiftUI / AVFoundation iPhone camera. Clean HEVC SDR, 10-bit HEVC HLG, ProRes HQ HLG and Apple Log recording profiles are offered only when sensor and encoder negotiation succeed. Real recorded bit depth still requires external verification.
 
@@ -42,3 +42,15 @@ Open the committed `FilmEngineCamera.xcodeproj`. Development signing uses Emmanu
 - Real project discovery verified against the installed Film Engine app; end-to-end user clip transfer is part of the phone checklist.
 
 See [phone tests](docs/TEST-TOMORROW.md). Apple Log 2, ProRes RAW, scopes, focus peaking, zebras, calibrated HDR monitoring, background upload and clip editing remain outside this build.
+
+## v0.4.1 refinements
+
+The app uses Film Engine's blue filmstrip icon and the name FE Camera. The top bar has its own inset and spacing from the side controls; portrait controls are centered around Record. The counter shows elapsed non-drop-frame HH:MM:SS:frames from AVCaptureMovieFileOutput.recordedDuration (three frame digits at 120 fps). It is an elapsed recording display, not externally synchronized production timecode.
+
+Guides supports 16:9, 1.85:1, 2:1, 2.39:1, 4:3, 1:1, 4:5 and 9:16. Selection persists and is captured in slate metadata. Guides do not crop the original recording.
+
+Uploads display percentage, bytes sent, average MB/s and approximate remaining time. At 100% the UI waits for the Mac to verify and register the MOV before showing success. Upload size is sent explicitly. Interrupted uploads retain the original on the phone and can be retried; keep the app open during a transfer. iCloud synchronization of a project's folder is separate from the phone-to-Mac upload.
+
+Verification: signed device and simulator builds pass; portrait and landscape spacing and ratio selection inspected in Simulator; 7 frame-timecode tests and 4 companion tests pass. A user-uploaded 1.03 GB / 13.5-second original was found and probed successfully in Blade Eternal's Clips folder: 4K, ProRes, 10-bit 4:2:2, 24 fps. Two later uploads failed (one HTTP 400 with no original reason logged; one phone-side connection reset). Explicit size headers and improved diagnostics are included; retry validation on the phone is still required.
+
+Timecode regression check: `swiftc FilmEngineCamera/Camera/RecordingTimecode.swift tests/TimecodeTests.swift -o /tmp/fe-timecode-tests && /tmp/fe-timecode-tests`.

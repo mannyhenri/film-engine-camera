@@ -13,3 +13,11 @@ The user's v0.3 tests passed recording, sound, Photos saving, offered HDR/ProRes
 9. Enter a distinctive scene/shot/take and notes in Slate. Record twice; check each JSON contains its own slate, FPS/profile and look. No slate text should appear in the video itself.
 
 Retrieve the untouched MOV from Files or Film Engine for codec/bit-depth verification in Resolve or ffprobe. Photos sharing may transcode a clip. Report profile, FPS, orientation, monitor state and the action immediately preceding any failure.
+
+## v0.4.1 follow-up
+
+- Confirm the Home Screen says FE Camera and shows the blue filmstrip icon.
+- Check top-bar separation and centered portrait Record control.
+- Choose each Guides aspect ratio; confirm the selected ratio persists and is saved in the next slate. The original MOV is not cropped.
+- Record past one minute and confirm HH:MM:SS:frames rolls over properly.
+- Retry the failed clips while keeping the phone app open. Watch percent, MB/s and time remaining; wait for the final MOV + JSON confirmation. If it fails, copy the exact error from Connection.

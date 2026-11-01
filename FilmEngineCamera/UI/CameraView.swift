@@ -52,6 +52,8 @@ struct CameraView: View {
     @State private var panel: CameraPanel?
     @State private var showGuides = true
     @State private var showGrid = false
+    @AppStorage("guide.aspect") private var guideAspect = "2.39:1"
+    private let aspects: [(String, Double)] = [("16:9", 16.0/9), ("1.85:1", 1.85), ("2:1", 2), ("2.39:1", 2.39), ("4:3", 4.0/3), ("1:1", 1), ("4:5", 0.8), ("9:16", 9.0/16)]
     @State private var showClips = false
     @State private var showConnection = false
 
@@ -69,35 +71,45 @@ struct CameraView: View {
                 if landscape {
                     HStack(spacing: 10) {
                         toolRail(vertical: true)
-                        if let panel { panelView(panel).frame(width: min(300, geo.size.width * 0.4), height: max(120, geo.size.height - 52)) }
+                        if let panel { panelView(panel).frame(width: min(300, geo.size.width * 0.4), height: max(120, geo.size.height - 86)) }
                         Spacer(minLength: 0)
                         VStack { libraryButton; connectionButton; Spacer(); recordButton; Spacer(); Text("\(camera.fps) FPS").font(.caption2.monospaced()) }
                             .padding(8).background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 16))
-                    }.padding(.top, 30).padding(.bottom, 8).padding(.horizontal, 8)
+                    }.padding(.top, 64).padding(.bottom, 12).padding(.horizontal, 12)
                 } else {
                     VStack(spacing: 8) {
                         Spacer(minLength: 0)
-                        if let panel { panelView(panel).frame(maxWidth: 380).frame(height: min(240, geo.size.height * 0.34)) }
-                        HStack { libraryButton; connectionButton; Spacer(); recordButton; Spacer(); Text("\(camera.fps) FPS").font(.caption.monospaced()) }.padding(.horizontal, 18)
-                        toolRail(vertical: false)
-                    }.padding(.bottom, 6)
+                        if let panel { panelView(panel).frame(maxWidth: 360).frame(height: min(214, geo.size.height * 0.30)).padding(.horizontal, 12) }
+                        HStack { HStack(spacing: 4) { libraryButton; connectionButton }.frame(maxWidth: .infinity); recordButton; VStack(spacing: 4) { Text("\(camera.fps) FPS"); Text(guideAspect) }.font(.caption.monospaced()).frame(maxWidth: .infinity) }.padding(.horizontal, 12).padding(.vertical, 10)
+                        toolRail(vertical: false).padding(.horizontal, 10)
+                    }.padding(.bottom, 12)
                 }
                 VStack {
-                    HStack(spacing: 8) {
-                        Image("FilmEngineLogo").resizable().scaledToFit().frame(width: 24, height: 24)
+                    HStack(spacing: 12) {
                         Button { panel = panel == .info ? nil : .info } label: {
-                            Text(camera.isRecording ? "● REC \(timeString)" : camera.isReady ? camera.selectedProfile.rawValue : camera.status)
-                                .lineLimit(1).font(.system(size: 11, weight: .semibold, design: .monospaced))
+                            Text("FE Camera").font(.system(size: 12, weight: .bold))
+                        }.accessibilityLabel("Camera status")
+                        Spacer(minLength: 4)
+                        Text(camera.recordTimecode).font(.system(size: 15, weight: .semibold, design: .monospaced))
+                            .monospacedDigit().fixedSize().foregroundStyle(camera.isRecording ? .red : .white)
+                            .accessibilityLabel("Elapsed timecode")
+                        Spacer(minLength: 4)
+                        if engine.uploadingFile != nil {
+                            Button { showConnection = true } label: { Text("↑ \(Int(engine.uploadProgress * 100))%").font(.caption.monospaced()) }
+                        } else {
+                            Text(camera.isRecording ? "REC" : camera.isReady ? "READY" : "WAIT")
+                                .font(.system(size: 10, weight: .bold)).foregroundStyle(camera.isRecording ? .red : .white.opacity(0.7))
                         }
-                        Spacer()
-                        if engine.busy { ProgressView().tint(.white) }
-                    }.padding(.horizontal, 12).padding(.vertical, 4).background(.black.opacity(0.5))
+                    }.padding(.horizontal, 14).frame(height: 40)
+                        .background(.black.opacity(0.65), in: RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal, 12).padding(.top, 4)
                     Spacer()
                 }.allowsHitTesting(true)
             }.foregroundStyle(.white)
         }
         .preferredColorScheme(.dark)
-        .onAppear { camera.start(); library.refresh() }
+        .onAppear { camera.metadata.aspectRatio = guideAspect; camera.start(); library.refresh() }
+        .onChange(of: guideAspect) { _, ratio in camera.metadata.aspectRatio = ratio }
         .onChange(of: camera.completedTake) { _, url in
             library.refresh()
             if let url, engine.autoUpload { engine.enqueue(url) }
@@ -107,7 +119,6 @@ struct CameraView: View {
         .sheet(isPresented: $showClips) { ClipLibraryView(library: library, engine: engine, camera: camera) }
         .sheet(isPresented: $showConnection) { EngineConnectionView(engine: engine) }
     }
-    private var timeString: String { String(format: "%02d:%02d", camera.recordSeconds / 60, camera.recordSeconds % 60) }
     private var recordButton: some View {
         Button { camera.toggleRecording() } label: {
             Circle().fill(camera.isRecording ? .red : .white).frame(width: 54, height: 54)
@@ -140,7 +151,8 @@ struct CameraView: View {
     private func compositionGuides(size: CGSize) -> some View {
         Path { path in
             if showGuides {
-                let w = min(size.width, size.height * 2.39), h = w / 2.39
+                let ratio = aspects.first { $0.0 == guideAspect }?.1 ?? 2.39
+                let w = min(size.width, size.height * ratio), h = w / ratio
                 path.addRect(CGRect(x: (size.width-w)/2, y: (size.height-h)/2, width: w, height: h))
             }
             if showGrid {
@@ -173,7 +185,11 @@ struct CameraView: View {
                         Text("Change format and FPS between takes. Changing profile starts at 24 fps.").font(.caption2)
                     case .look: LookControls(camera: camera)
                     case .guides:
-                        Toggle("2.39:1 frame guide", isOn: $showGuides)
+                        Toggle("Frame guide", isOn: $showGuides)
+                        Picker("Aspect ratio", selection: $guideAspect) {
+                            ForEach(aspects, id: \.0) { item in Text(item.0).tag(item.0) }
+                        }.pickerStyle(.menu)
+                        Text("Composition guide only. The full sensor-format image is saved for cropping in your editor.").font(.caption2)
                         Toggle("Thirds grid", isOn: $showGrid)
                     case .slate:
                         TextField("Project label", text: $camera.metadata.project)
@@ -186,7 +202,7 @@ struct CameraView: View {
                         Text(camera.status); Text(camera.captureDetails).foregroundStyle(.green)
                         Text(camera.inspection).foregroundStyle(.yellow).textSelection(.enabled)
                         Text(engine.message).foregroundStyle(.cyan)
-                        Text("v0.4 · clean master recording").font(.caption2)
+                        Text("v0.4.1 · clean master recording").font(.caption2)
                     }
                 }.font(.subheadline).tint(.pink).textFieldStyle(.roundedBorder)
                     .disabled((selected == .format && camera.isRecording) || camera.isConfiguring)
@@ -253,7 +269,13 @@ struct EngineConnectionView: View {
                     Toggle("Send new takes automatically", isOn: $engine.autoUpload).disabled(engine.selectedProject.isEmpty || engine.busy)
                     Text("Clips go to the selected project’s Clips folder. Originals stay on this phone. Keep the app open while sending; failed transfers can be retried from Clips.").font(.footnote)
                 }
-                Section { Text(engine.message); if engine.busy { ProgressView() } }
+                Section {
+                    Text(engine.message)
+                    if engine.uploadingFile != nil {
+                        ProgressView(value: engine.uploadProgress)
+                        Text(engine.transferDetails).font(.caption.monospaced())
+                    } else if engine.busy { ProgressView() }
+                }
             }.navigationTitle("Film Engine").toolbar { Button("Done") { dismiss() } }
                 .task { if engine.projects.isEmpty && !engine.server.isEmpty { await engine.connect() } }
         }
@@ -275,6 +297,7 @@ struct ClipLibraryView: View {
                     Text("\(ClipLibrary.size(library.freeBytes)) free on iPhone").foregroundStyle(.secondary)
                     if !library.message.isEmpty { Text(library.message).font(.caption) }
                     if !engine.message.isEmpty { Text(engine.message).font(.caption) }
+                    if engine.uploadingFile != nil { ProgressView(value: engine.uploadProgress); Text(engine.transferDetails).font(.caption.monospaced()) }
                 }
                 ForEach(library.clips) { clip in
                     VStack(alignment: .leading, spacing: 6) {

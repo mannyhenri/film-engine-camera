@@ -22,6 +22,14 @@ private enum PairingKey {
     }
 }
 
+private final class TransferProgress: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    let report: @Sendable (Int64, Int64) -> Void
+    init(report: @escaping @Sendable (Int64, Int64) -> Void) { self.report = report }
+    func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
+        report(totalBytesSent, totalBytesExpectedToSend)
+    }
+}
+
 @MainActor
 final class FilmEngineConnection: ObservableObject {
     @Published var server: String { didSet { UserDefaults.standard.set(server, forKey: "engine.server"); projects = []; selectedProject = "" } }
@@ -30,6 +38,8 @@ final class FilmEngineConnection: ObservableObject {
     @Published var autoUpload: Bool { didSet { UserDefaults.standard.set(autoUpload, forKey: "engine.auto") } }
     @Published var projects: [FilmProject] = []
     @Published var busy = false
+    @Published var uploadProgress = 0.0
+    @Published var transferDetails = ""
     @Published var message = "Choose a project to send clips to Film Engine."
     @Published var uploadingFile: URL?
     private var pending: [(URL, String)] = []
@@ -93,19 +103,35 @@ final class FilmEngineConnection: ObservableObject {
         guard !busy, !(projectID ?? selectedProject).isEmpty else { message = "Connect and select a project first."; return }
         let project = projectID ?? selectedProject
         busy = true; uploadingFile = url
+        uploadProgress = 0; transferDetails = "Preparing transfer…"
         UIApplication.shared.isIdleTimerDisabled = true
         defer { busy = false; uploadingFile = nil; UIApplication.shared.isIdleTimerDisabled = false }
         message = "Sending \(url.lastPathComponent)… Keep the app open."
         do {
             var req = try request("projects/\(project)/clips/\(url.lastPathComponent)", method: "PUT")
             req.setValue("video/quicktime", forHTTPHeaderField: "Content-Type")
+            let bytes = Int64(try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0)
+            guard bytes > 0 else { throw URLError(.fileDoesNotExist) }
+            req.setValue(String(bytes), forHTTPHeaderField: "Content-Length")
+            let started = Date()
+            let progress = TransferProgress { [weak self] sent, expected in
+                Task { @MainActor in
+                    guard let self else { return }
+                    let total = expected > 0 ? expected : bytes
+                    self.uploadProgress = min(1, Double(sent) / Double(total))
+                    let speed = Double(sent) / max(0.1, Date().timeIntervalSince(started))
+                    let left = Int(Double(max(0, total - sent)) / max(1, speed))
+                    self.transferDetails = "\(ClipLibrary.size(sent)) / \(ClipLibrary.size(total)) · \(String(format: "%.1f", speed / 1_000_000)) MB/s · ~\(left / 60)m \(left % 60)s left"
+                    if sent >= total { self.message = "Transfer received; verifying and registering the MOV on your Mac…" }
+                }
+            }
             let sidecar = url.deletingPathExtension().appendingPathExtension("json")
             if let data = try? Data(contentsOf: sidecar) {
                 guard data.count <= 24000 else { throw NSError(domain: "FilmEngine", code: 0, userInfo: [NSLocalizedDescriptionKey: "Slate metadata exceeds 24 KB. Shorten the notes before sending."]) }
                 req.setValue(data.base64EncodedString(), forHTTPHeaderField: "X-Camera-Metadata")
             }
             // URLSession streams the MOV from disk, never loading a ProRes take into RAM.
-            let (data, response) = try await session.upload(for: req, fromFile: url)
+            let (data, response) = try await session.upload(for: req, fromFile: url, delegate: progress)
             try validate(data, response)
             guard let receipt = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                   receipt["asset_id"] is String, receipt["project_id"] as? String == project,
@@ -113,7 +139,9 @@ final class FilmEngineConnection: ObservableObject {
                 throw NSError(domain: "FilmEngine", code: 0, userInfo: [NSLocalizedDescriptionKey: "The server did not return a valid saved-clip receipt."])
             }
             try data.write(to: url.deletingPathExtension().appendingPathExtension("upload.json"), options: .atomic)
-            message = "Saved to Film Engine’s project Clips folder. Original retained on iPhone."
+            message = "Saved MOV + JSON to Film Engine’s project Clips folder. Original retained on iPhone."
+            uploadProgress = 1
+            transferDetails = "Verified \(ClipLibrary.size(bytes)) · \(projects.first { $0.id == project }?.title ?? "selected project")"
         } catch { message = "Upload failed: \(error.localizedDescription). Original retained; retry from Clips." }
     }
 }
