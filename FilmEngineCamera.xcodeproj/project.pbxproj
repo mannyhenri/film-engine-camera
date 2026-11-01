@@ -122,7 +122,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					34C7EF80C10CCC82CF39DE29 = {
-						DevelopmentTeam = 3AXRJ22S9P;
+						DevelopmentTeam = W7QXFS7XBU;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -236,7 +236,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = 3AXRJ22S9P;
+				DEVELOPMENT_TEAM = W7QXFS7XBU;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = FilmEngineCamera/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -315,7 +315,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = 3AXRJ22S9P;
+				DEVELOPMENT_TEAM = W7QXFS7XBU;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = FilmEngineCamera/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

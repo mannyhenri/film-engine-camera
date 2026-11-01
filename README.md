@@ -20,7 +20,7 @@ Unsupported profiles are omitted from the picker. Nothing is silently downgraded
 ## Build on macOS
 
 1. Open the included `FilmEngineCamera.xcodeproj` in Xcode.
-2. Sign in under Xcode → Settings → Accounts with access to the Gridlight development team. Automatic signing uses team `3AXRJ22S9P`; choose your own team if building independently.
+2. Sign in under Xcode → Settings → Accounts with access to the Emmanuel Henri development team. Automatic signing uses team `W7QXFS7XBU`; choose your own team if building independently.
 3. Select the FilmEngineCamera target, confirm automatic signing, and select your connected iPhone. The app has its own bundle ID, `ai.gridlight.filmenginecamera`.
 
 If editing `project.yml`, regenerate with XcodeGen (`brew install xcodegen`, then `xcodegen generate`). Keep the generated project committed.
@@ -41,7 +41,7 @@ If editing `project.yml`, regenerate with XcodeGen (`brew install xcodegen`, the
 
 ## Known limitations
 
-This build **compiles for iPhone**, but has not yet been installed or run on a physical device. The current Mac needs an Xcode account sign-in and an updated development provisioning profile before installation. It is an alpha implementation, not proven production recording. `AVCaptureMovieFileOutput` has platform/version-dependent HDR behavior. Apple Log preview can appear flat; monitor-grade LUTs/Metal grading are future work. Rotation, backgrounding, storage safeguards, locked exposure and full codec/bit-depth verification are not complete. For a guaranteed high-value shoot, use an established camera app until validated.
+This build **compiles for iPhone**, and has been installed on a physical device; launch and recording verification remain pending. Version 0.3.1 was signed and installed wirelessly on iPhone Manu using the Emmanuel Henri team. iOS requested developer trust before launch; capture tests remain pending. It is an alpha implementation, not proven production recording. `AVCaptureMovieFileOutput` has platform/version-dependent HDR behavior. Apple Log preview can appear flat; monitor-grade LUTs/Metal grading are future work. Rotation, backgrounding, storage safeguards, locked exposure and full codec/bit-depth verification are not complete. For a guaranteed high-value shoot, use an established camera app until validated.
 
 ## Apple references
 
@@ -55,6 +55,10 @@ This build **compiles for iPhone**, but has not yet been installed or run on a p
 - Fixed Swift language mode, generated project, Photos permission, file sharing and version settings.
 - Isolated capture hardware on its serial queue; UI state remains on the main actor.
 - Debounced record taps, captured slate metadata before recording, restored the previous profile after failed configuration, and checked manual-control capabilities.
-- Signed device build is pending Apple account/provisioning setup. HDR, ProRes, audio, Photos export and interruption handling still require the field tests below.
+- Signed device build and wireless installation succeeded using team `W7QXFS7XBU`. HDR, ProRes, audio, Photos export and interruption handling still require the field tests below.
 
 See [the phone checklist](docs/TEST-TOMORROW.md).
+
+## Direct wireless updates
+
+Keep the paired iPhone available on the same network as the Mac, select it as the Xcode run destination, and build/run to install updates. No App Store or TestFlight submission is needed. Development signing is still required. Trust the developer under iPhone Settings → General → VPN & Device Management if iOS requests it. The Gridlight team remains blocked by its outstanding license agreement; local testing uses the Emmanuel Henri team.

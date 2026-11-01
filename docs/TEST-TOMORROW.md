@@ -2,7 +2,7 @@
 
 ## Build on macOS
 1. Open the committed `FilmEngineCamera.xcodeproj`; XcodeGen is needed only after changing `project.yml`.
-2. Sign in to Xcode → Settings → Accounts. Select the Gridlight development team with automatic signing.
+2. Sign in to Xcode → Settings → Accounts. Select the Emmanuel Henri development team with automatic signing.
 3. Select iPhone Manu as the destination and Run. Allow Xcode to register the phone and generate a development provisioning profile if prompted.
 4. Grant Camera, Microphone and Photos permissions.
 
@@ -18,7 +18,7 @@
 - Repeat after background/foreground and after screen rotation.
 
 ## Known limitations / no-go conditions
-- Unsigned iPhone build passed in Xcode 26.1 on November 1, 2026; signed installation is blocked until Xcode account/provisioning setup is completed. No on-device capture has been verified.
+- Unsigned iPhone build passed in Xcode 26.1 on November 1, 2026; signed build and wireless installation succeeded using team W7QXFS7XBU. iOS developer trust and on-device capture verification remain pending.
 - 10-bit capture and color tags are configured/inspected, not yet independently verified from a physical device.
 - Preview processing is experimental, computationally heavy, approximate, and not an HDR reference monitor; turn it off if unstable.
 - Manual ISO range is UI-generic; AVFoundation clamps to active sensor's capabilities.
