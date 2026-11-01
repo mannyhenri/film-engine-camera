@@ -20,10 +20,21 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CameraBridgeToken</key>
+	<string>$(CAMERA_BRIDGE_TOKEN)</string>
+	<key>CameraBridgeURL</key>
+	<string>$(CAMERA_BRIDGE_URL)</string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera access is required to frame and record video.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Connect to Film Engine on your Mac to save clips into a selected project.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Microphone access is required to record production sound.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

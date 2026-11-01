@@ -21,6 +21,11 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen: {}
+        NSLocalNetworkUsageDescription: Connect to Film Engine on your Mac to save clips into a selected project.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        CameraBridgeURL: $(CAMERA_BRIDGE_URL)
+        CameraBridgeToken: $(CAMERA_BRIDGE_TOKEN)
         NSCameraUsageDescription: Camera access is required to frame and record video.
         NSMicrophoneUsageDescription: Microphone access is required to record production sound.
         NSPhotoLibraryAddUsageDescription: Save recorded footage to Photos.
@@ -33,7 +38,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ai.gridlight.filmenginecamera
         GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: 1
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: W7QXFS7XBU
-        MARKETING_VERSION: 0.3.1
-        CURRENT_PROJECT_VERSION: 2
+        MARKETING_VERSION: 0.4.0
+        CURRENT_PROJECT_VERSION: 3

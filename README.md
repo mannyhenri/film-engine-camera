@@ -1,64 +1,44 @@
-# Film Engine Camera · v0.3.1 phone-test build
+# Film Engine Camera · v0.4
 
-**iPhone SDK build verified with Xcode 26.1. Physical-device recording remains untested.**
+Native SwiftUI / AVFoundation iPhone camera. Clean HEVC SDR, 10-bit HEVC HLG, ProRes HQ HLG and Apple Log recording profiles are offered only when sensor and encoder negotiation succeed. Real recorded bit depth still requires external verification.
 
-New: manual ISO/shutter/focus/WB/zoom, experimental nondestructive Core Image monitoring, look recipes, slate metadata sidecar, composition guides and full field test checklist.
+## Camera controls
 
-## Camera prototype
+- Portrait: scrollable icon rail at the bottom. Landscape: rail on the left.
+- Tap an icon to open a small control panel; tap it again or × to close it. Preview remains visible.
+- Exposure, white balance, focus and zoom can be adjusted during a take. Format and FPS changes are locked until recording stops.
+- **Format → FPS** offers compatible sensor rates from 24, 25, 30, 48, 50, 60 and 120. Selecting a new profile starts at 24 fps. A configuration failure restores the previous profile/rate. These are normal-speed recordings at the selected FPS, not conformed slow motion.
+- **Info** contains the detailed status, active format and latest saved-file inspection; the old permanent status card is gone.
+- Preview follows interface orientation; each recording keeps the orientation present when Record was pressed. Do not rotate mid-take if you want a consistent composition.
+- **Look** renders a downscaled creative monitor on a dedicated queue with GPU-backed Core Image. It caps presentation at 30 fps and drops stale frames instead of building a backlog. It is an SDR creative preview, not a calibrated HDR monitor. The recorded master is unfiltered.
 
-Native iPhone camera prototype using SwiftUI and AVFoundation. Focus: real device capability negotiation for HDR / ProRes recording, and on-device inspection of saved footage.
+## Slate
 
-## Supported *requested* recording profiles
+The slate stores project label, scene, shot, take, notes, selected FPS/profile and look recipe in a matching `.json` beside the MOV. It is not a visible clapboard, timecode overlay, or burn-in. Values are captured when recording starts; edits during a take apply to the next take. The take number increments after a successful recording. The upload destination is chosen separately in Connection.
 
-- **HEVC 10-bit HLG (BT.2020)**: requires an HLG-compatible 10-bit sensor format and HEVC encoding.
-- **ProRes 422 HQ HLG**: requires a supported 10-bit 4:2:2 sensor format, HLG color space, and ProRes 422 HQ encoding.
-- **ProRes 422 HQ Apple Log**: requires a supported 10-bit 4:2:2 sensor format, Apple Log color space, and ProRes 422 HQ encoding.
-- **HEVC SDR**: fallback when none of the above is supported.
+## Clips and storage
 
-Unsupported profiles are omitted from the picker. Nothing is silently downgraded. Apple Log 2 is **not** implemented yet. ProRes RAW is **not** implemented yet. This implementation uses `AVCaptureMovieFileOutput` rather than a custom sample-buffer/`AVAssetWriter` pipeline.
+Open the stacked-photos icon to see local clips, sizes and available storage. Each clip supports playback, saving to Photos, sharing, sending to Film Engine, and confirmed local deletion. Deletion removes the MOV, slate JSON and local upload receipt; it never deletes Photos or Film Engine copies. Files currently queued or transferring cannot be deleted. There is no automatic deletion.
 
-## Build on macOS
+## Optional Film Engine connection
 
-1. Open the included `FilmEngineCamera.xcodeproj` in Xcode.
-2. Sign in under Xcode → Settings → Accounts with access to the Emmanuel Henri development team. Automatic signing uses team `W7QXFS7XBU`; choose your own team if building independently.
-3. Select the FilmEngineCamera target, confirm automatic signing, and select your connected iPhone. The app has its own bundle ID, `ai.gridlight.filmenginecamera`.
+The network icon opens Connection. Connect, choose a project, and optionally enable **Send new takes automatically**. Existing clips can be sent individually from Clips. Keep the app in the foreground during transfers; unsuccessful uploads retain the local original and can be retried. Transfers stream from disk rather than loading a ProRes file into phone memory. Retrying the same complete file is idempotent; interrupted partial transfers restart from the beginning.
 
-If editing `project.yml`, regenerate with XcodeGen (`brew install xcodegen`, then `xcodegen generate`). Keep the generated project committed.
+The companion in `companion/bridge.py` runs on the Mac and talks to Film Engine's existing local HTTP API. It retrieves the project's storage report, places the original MOV and slate JSON in its video/Clips folder, and registers a `video_raw` asset. It does not create shots or change existing shot clips. Legacy projects use the video folder reported by Film Engine. Film Engine must be running.
 
-4. Run on a real compatible iPhone (camera will not function in Simulator).
-5. Review selected sensor dimensions/format and profile in the live overlay.
-6. Record a short take; review **FILE** inspection text showing codec and color tags.
-7. Tap **SAVE** to copy to Photos; original persists in the app Documents directory (visible under Files via the app's file-sharing settings).
+The companion requires a random bearer pairing key. This is an authenticated local-network connection over HTTP, intended for a trusted Wi-Fi network; it is not a public internet upload service. Phone pairing settings can be supplied locally as `CAMERA_BRIDGE_URL` and `CAMERA_BRIDGE_TOKEN` build settings, or entered in Connection. Never commit pairing keys. `.local/` is ignored. User-entered pairing keys are stored in iOS Keychain.
 
-## Validation needed on real hardware
+For this Mac, the user approved starting `ai.gridlight.camera-bridge` at login. The service is in `~/Library/LaunchAgents/ai.gridlight.camera-bridge.plist`; configuration and logs are in `.local/`. The companion listens on port 5392, while the installed Film Engine app provides its API on loopback port 3100. If Film Engine uses a different port, update `engine_url` in the local config and restart the companion. Stop the service with `launchctl bootout gui/$(id -u)/ai.gridlight.camera-bridge`.
 
-- Check 10-bit **actual decoded pixel format / bit depth** externally with `ffprobe` or DaVinci Resolve. The app checks the chosen 10-bit sensor format and encoder capability, but codec + color tags alone do **not prove** an output is truly 10-bit.
-- Verify HLG primaries `BT.2020` and transfer `HLG` in inspection and metadata tools.
-- Check Apple Log transfer metadata and proper Resolve input color-space transform on a Pro model.
-- Verify 24 fps, recording stability, temperature, free space, display orientation, sound sync and Photos export.
-- Profile changes during capture are intentionally disabled.
-- Save critical footage outside the app; deleting the app deletes its Documents.
+For a fresh setup, create a private JSON config containing `engine_url`, a random `token` of at least 24 characters, `host`, and `port`; run `python3 companion/bridge.py --config .local/bridge.json`. Python 3.11+ is required. `ffprobe` is recommended to measure uploaded clips and validate the movie before registration.
 
-## Known limitations
+## Build and test
 
-This build **compiles for iPhone**, and has been installed on a physical device; launch and recording verification remain pending. Version 0.3.1 was signed and installed wirelessly on iPhone Manu using the Emmanuel Henri team. iOS requested developer trust before launch; capture tests remain pending. It is an alpha implementation, not proven production recording. `AVCaptureMovieFileOutput` has platform/version-dependent HDR behavior. Apple Log preview can appear flat; monitor-grade LUTs/Metal grading are future work. Rotation, backgrounding, storage safeguards, locked exposure and full codec/bit-depth verification are not complete. For a guaranteed high-value shoot, use an established camera app until validated.
+Open the committed `FilmEngineCamera.xcodeproj`. Development signing uses Emmanuel Henri team `W7QXFS7XBU`; choose your own team when building elsewhere. Use XcodeGen after editing `project.yml`. The bundle ID remains `ai.gridlight.filmenginecamera`, preserving existing phone recordings on updates. Wireless development installs are supported on the paired phone.
 
-## Apple references
+- iPhone and simulator builds verified with Xcode 26.1.
+- Portrait and landscape layouts inspected in the simulator. Simulator has no rear camera; real orientation/monitor performance need phone testing.
+- Companion tests: `python3 -m unittest discover -s companion -p 'test_*.py'`.
+- Real project discovery verified against the installed Film Engine app; end-to-end user clip transfer is part of the phone checklist.
 
-- [TN3104 ProRes recording](https://developer.apple.com/documentation/technotes/tn3104-recording-video-in-apple-prores)
-- [Movie output available codecs](https://developer.apple.com/documentation/avfoundation/avcapturemoviefileoutput/availablevideocodectypes)
-- [Capture color spaces](https://developer.apple.com/documentation/avfoundation/avcapturecolorspace)
-
-## Build verification — November 1, 2026
-
-- Xcode 26.1, Debug, generic iOS device: build passed without Swift source warnings.
-- Fixed Swift language mode, generated project, Photos permission, file sharing and version settings.
-- Isolated capture hardware on its serial queue; UI state remains on the main actor.
-- Debounced record taps, captured slate metadata before recording, restored the previous profile after failed configuration, and checked manual-control capabilities.
-- Signed device build and wireless installation succeeded using team `W7QXFS7XBU`. HDR, ProRes, audio, Photos export and interruption handling still require the field tests below.
-
-See [the phone checklist](docs/TEST-TOMORROW.md).
-
-## Direct wireless updates
-
-Keep the paired iPhone available on the same network as the Mac, select it as the Xcode run destination, and build/run to install updates. No App Store or TestFlight submission is needed. Development signing is still required. Trust the developer under iPhone Settings → General → VPN & Device Management if iOS requests it. The Gridlight team remains blocked by its outstanding license agreement; local testing uses the Emmanuel Henri team.
+See [phone tests](docs/TEST-TOMORROW.md). Apple Log 2, ProRes RAW, scopes, focus peaking, zebras, calibrated HDR monitoring, background upload and clip editing remain outside this build.

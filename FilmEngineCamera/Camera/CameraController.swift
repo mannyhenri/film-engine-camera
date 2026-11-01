@@ -30,14 +30,30 @@ final class CameraController: NSObject, ObservableObject {
     @Published var whiteBalanceKelvin: Float = 5600
     @Published var focusPosition: Float = 0.5
     @Published var zoomFactor: Double = 1
-    @Published var filmLook = FilmLook.neutral
-    @Published var monitoringEnabled = false
+    @Published var filmLook = FilmLook.neutral { didSet { updateMonitor() } }
+    @Published var monitoringEnabled = false { didSet { updateMonitor(); if !monitoringEnabled { monitorFrame = nil } } }
     @Published var monitorFrame: CGImage?
     @Published var metadata = ShotMetadata()
     @Published var monitoringStatus = "Monitor off"
     private var pendingMetadata = ShotMetadata()
-    private let monitorContext = CIContext(options: [.useSoftwareRenderer: false])
-    private var monitorCounter = 0
+    nonisolated let renderer = MonitorRenderer()
+    @Published var fps = 24
+    @Published var availableFPS = [24]
+    @Published var isoRange: ClosedRange<Double> = 25...1600
+    @Published var maxZoom: Double = 3
+    @Published var completedTake: URL?
+    private var previewAngle: CGFloat = 90
+
+    private func updateMonitor() {
+        renderer.configure(enabled: monitoringEnabled, look: filmLook, angle: previewAngle)
+        monitoringStatus = monitoringEnabled ? "Creative monitor · clean master" : "Monitor off"
+    }
+    func updateOrientation(_ angle: CGFloat) {
+        previewAngle = angle
+        monitorFrame = nil
+        updateMonitor()
+    }
+
 
     nonisolated let capture = CaptureHardware()
     nonisolated var session: AVCaptureSession { capture.session }
@@ -48,6 +64,12 @@ final class CameraController: NSObject, ObservableObject {
     func start() {
         guard !configured, !isConfiguring else { return }
         isConfiguring = true
+        renderer.receive = { [weak self] frame in
+            MainActor.assumeIsolated {
+                guard let self, self.monitoringEnabled else { return }
+                self.monitorFrame = frame
+            }
+        }
         Task {
             let cameraGranted = await AVCaptureDevice.requestAccess(for: .video)
             let micGranted = await AVCaptureDevice.requestAccess(for: .audio)
@@ -81,10 +103,10 @@ final class CameraController: NSObject, ObservableObject {
                 self.session.addOutput(self.capture.movieOutput)
                 self.capture.movieOutput.movieFragmentInterval = CMTime(seconds: 2, preferredTimescale: 600)
                 self.capture.videoDevice = device
-                // Optional sample buffers for a low-fps creative monitor.
+                // Dedicated low-latency monitor queue; recording remains unfiltered.
                 // Full-resolution file capture is independent from this preview.
                 self.capture.monitorOutput.alwaysDiscardsLateVideoFrames = true
-                self.capture.monitorOutput.setSampleBufferDelegate(self, queue: self.capture.monitorQueue)
+                self.capture.monitorOutput.setSampleBufferDelegate(self.renderer, queue: self.capture.monitorQueue)
                 if self.session.canAddOutput(self.capture.monitorOutput) { self.session.addOutput(self.capture.monitorOutput) }
                 // A mode is advertised only after both format and codec negotiation succeeds.
                 let supported = RecordingProfile.allCases.filter { self.install($0, on: device) != nil }
@@ -92,6 +114,9 @@ final class CameraController: NSObject, ObservableObject {
                 guard supported.contains(preferred), let details = self.install(preferred, on: device) else {
                     throw CameraError.unsupported("No usable video profile on this device")
                 }
+                let rates = FormatSelector.frameRates(for: device, profile: preferred)
+                let isoRange = Double(device.activeFormat.minISO)...Double(device.activeFormat.maxISO)
+                let maxZoom = min(10, Double(device.activeFormat.videoMaxZoomFactor))
                 self.session.commitConfiguration()
                 self.session.startRunning()
                 Task { @MainActor in
@@ -99,6 +124,9 @@ final class CameraController: NSObject, ObservableObject {
                     self.profiles = supported
                     self.selectedProfile = preferred
                     self.captureDetails = details
+                    self.availableFPS = rates
+                    self.isoRange = isoRange
+                    self.maxZoom = maxZoom
                     self.isConfiguring = false
                     self.isReady = true
                     self.status = micGranted ? "Ready to record" : "Ready · microphone permission denied"
@@ -117,15 +145,16 @@ final class CameraController: NSObject, ObservableObject {
     }
 
     /// Runs only on sessionQueue. Returns nil instead of quietly selecting another profile.
-    nonisolated private func install(_ profile: RecordingProfile, on device: AVCaptureDevice) -> String? {
-        guard let choice = FormatSelector.select(for: device, profile: profile),
+    nonisolated private func install(_ profile: RecordingProfile, on device: AVCaptureDevice, fps: Int = 24) -> String? {
+        guard let choice = FormatSelector.select(for: device, profile: profile, fps: Double(fps)),
               let connection = capture.movieOutput.connection(with: .video) else { return nil }
         do {
             try device.lockForConfiguration()
             device.activeFormat = choice.format
+            if device.isExposureModeSupported(.continuousAutoExposure) { device.exposureMode = .continuousAutoExposure }
             device.activeColorSpace = profile.colorSpace
-            device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 24)
-            device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 24)
+            device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: Int32(fps))
+            device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: Int32(fps))
             device.unlockForConfiguration()
             guard capture.movieOutput.availableVideoCodecTypes.contains(profile.codec) else { return nil }
             // iOS allows only keys returned by supportedOutputSettingsKeys(for:).
@@ -133,26 +162,36 @@ final class CameraController: NSObject, ObservableObject {
             capture.movieOutput.setOutputSettings([AVVideoCodecKey: profile.codec.rawValue], for: connection)
             let active = capture.movieOutput.outputSettings(for: connection)[AVVideoCodecKey] as? String
             guard active == profile.codec.rawValue, device.activeColorSpace == profile.colorSpace else { return nil }
-            return "\(choice.width)×\(choice.height) · 24 fps · \(profile.rawValue) · sensor \(fourCC(choice.pixelSubtype))"
+            return "\(choice.width)×\(choice.height) · \(fps) fps · \(profile.rawValue) · sensor \(fourCC(choice.pixelSubtype))"
         } catch { return nil }
     }
 
-    func select(_ profile: RecordingProfile) {
+    func select(_ profile: RecordingProfile, fps requestedFPS: Int? = nil) {
         guard isReady, !isRecording, !isConfiguring, profiles.contains(profile) else { return }
         isConfiguring = true
         isReady = false
         let previous = selectedProfile
+        let previousFPS = fps
+        let targetFPS = requestedFPS ?? 24
         sessionQueue.async { [weak self] in
             guard let self, let device = self.capture.videoDevice else { return }
             self.session.beginConfiguration()
-            let details = self.install(profile, on: device)
-            let restored = details == nil ? self.install(previous, on: device) : nil
+            let details = self.install(profile, on: device, fps: targetFPS)
+            let restored = details == nil ? self.install(previous, on: device, fps: previousFPS) : nil
+            let rates = FormatSelector.frameRates(for: device, profile: details != nil ? profile : previous)
+            let isoRange = Double(device.activeFormat.minISO)...Double(device.activeFormat.maxISO)
+            let maxZoom = min(10, Double(device.activeFormat.videoMaxZoomFactor))
             self.session.commitConfiguration()
             Task { @MainActor in
                 self.isConfiguring = false
                 self.isReady = details != nil || restored != nil
                 if let details {
                     self.selectedProfile = profile
+                    self.fps = targetFPS
+                    self.availableFPS = rates
+                    self.isoRange = isoRange
+                    self.maxZoom = maxZoom
+                    self.manualExposure.locked = false
                     self.captureDetails = details
                     self.status = "Profile configured"
                 } else {
@@ -172,18 +211,23 @@ final class CameraController: NSObject, ObservableObject {
             shot.capturedAt = Date()
             shot.requestedProfile = selectedProfile.rawValue
             shot.filmLook = filmLook
+            shot.fps = fps
             pendingMetadata = shot
+            let recordingAngle = previewAngle
             sessionQueue.async { [weak self] in
                 guard let self else { return }
                 let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
                 let url = folder.appendingPathComponent("FEC-\(UUID().uuidString).mov")
+                if let connection = self.capture.movieOutput.connection(with: .video), connection.isVideoRotationAngleSupported(recordingAngle) {
+                    connection.videoRotationAngle = recordingAngle
+                }
                 self.capture.movieOutput.startRecording(to: url, recordingDelegate: self)
             }
         }
     }
 
-    func saveToPhotos() {
-        guard let url = lastFile else { return }
+    func saveToPhotos(_ file: URL? = nil) {
+        guard let url = file ?? lastFile else { return }
         Task {
             let auth = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
             guard auth == .authorized || auth == .limited else { status = "Photos permission denied. File remains in app Documents."; return }
@@ -217,6 +261,8 @@ final class CameraController: NSObject, ObservableObject {
         inspection = "Inspecting saved track…"
         let completedMetadata = pendingMetadata
         metadata.take += 1
+        do { _ = try ShotSidecar.save(completedMetadata, alongside: url) }
+        catch { status = "MOV saved; metadata failed: \(error.localizedDescription)" }
         Task {
             do {
                 let asset = AVURLAsset(url: url)
@@ -237,6 +283,7 @@ final class CameraController: NSObject, ObservableObject {
             } catch {
                 inspection = "Could not inspect file: \(error.localizedDescription)"
             }
+            completedTake = url
         }
     }
 }
@@ -258,26 +305,4 @@ private func fourCC(_ code: FourCharCode) -> String {
 private enum CameraError: LocalizedError {
     case unsupported(String)
     var errorDescription: String? { if case .unsupported(let message) = self { return message }; return "Unsupported" }
-}
-
-// Monitor is a lower-rate approximation. SDR display rendering does NOT provide
-// HDR-accurate waveform/scopes and cannot be used for exposure-critical work.
-extension CameraController: AVCaptureVideoDataOutputSampleBufferDelegate {
-    nonisolated func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        guard let pixel = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-        Task { @MainActor [weak self] in
-            guard let self, self.monitoringEnabled else { return }
-            self.monitorCounter += 1
-            guard self.monitorCounter % 3 == 0 else { return }
-            let look = self.filmLook
-            let image = CIImage(cvPixelBuffer: pixel).oriented(.right)
-            // Scale preview early to avoid 4K processing and UI stalls.
-            let scaled = image.transformed(by: CGAffineTransform(scaleX: 0.4, y: 0.4))
-            let rendered = look.process(scaled)
-            if let cgImage = self.monitorContext.createCGImage(rendered, from: rendered.extent) {
-                self.monitorFrame = cgImage
-                self.monitoringStatus = "Creative preview · clean master"
-            }
-        }
-    }
 }

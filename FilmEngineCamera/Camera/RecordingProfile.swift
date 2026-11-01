@@ -43,6 +43,9 @@ struct FormatChoice {
 
 /// Selects a real, compatible sensor format; codec support must be checked after activation.
 enum FormatSelector {
+    static func frameRates(for device: AVCaptureDevice, profile: RecordingProfile) -> [Int] {
+        [24, 25, 30, 48, 50, 60, 120].filter { select(for: device, profile: profile, fps: Double($0)) != nil }
+    }
     static func select(for device: AVCaptureDevice, profile: RecordingProfile, fps: Double = 24) -> FormatChoice? {
         let candidates = device.formats.compactMap { format -> FormatChoice? in
             let d = CMVideoFormatDescriptionGetDimensions(format.formatDescription)

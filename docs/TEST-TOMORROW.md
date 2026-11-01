@@ -1,28 +1,15 @@
-# Film Engine Camera 0.3.1 phone test
+# v0.4 phone checks
 
-## Build on macOS
-1. Open the committed `FilmEngineCamera.xcodeproj`; XcodeGen is needed only after changing `project.yml`.
-2. Sign in to Xcode → Settings → Accounts. Select the Emmanuel Henri development team with automatic signing.
-3. Select iPhone Manu as the destination and Run. Allow Xcode to register the phone and generate a development provisioning profile if prompted.
-4. Grant Camera, Microphone and Photos permissions.
+The user's v0.3 tests passed recording, sound, Photos saving, offered HDR/ProRes profiles and basic controls. This pass targets the reported issues and new functions.
 
-## Capture test matrix (repeat for each profile shown by device)
-- Confirm app starts and sensor preview moves smoothly.
-- Try HEVC HDR HLG and ProRes 422 HQ HLG/Apple Log when offered; **missing profile means device/format couldn't negotiate it**.
-- Set ISO 100 and 1/48 shutter; adjust white balance and focus before recording.
-- Tap Record rapidly twice: only one take should start; stop after ten seconds. Repeat with a different slate take and confirm each JSON matches its MOV. Then inspect codec/primaries/transfer.
-- Record ten seconds and stop; inspect codec/primaries/transfer message.
-- Save to Photos. Export file to Mac. Confirm codec, bit depth and HDR transfer in MediaInfo or DaVinci Resolve; tags alone do not prove bit depth.
-- Switch Color Lab monitor on/off, test each look. Watch for stutter and thermal warnings. The ungraded master should not change.
-- Enter project/scene/shot, record, then export both the MOV and JSON sidecar from Files > On My iPhone > Film Engine Camera (if displayed).
-- Repeat after background/foreground and after screen rotation.
+1. Rotate to both landscape directions before recording. Preview should be upright and fill the screen. Record a short take in each orientation and verify playback in Clips and Photos. The file orientation stays fixed during each take.
+2. Confirm icons sit on the left in landscape and at the bottom in portrait. Scroll the rail for additional icons. Open Exposure/WB/Focus/Zoom: a small panel should leave the live image visible. Change a setting and watch its effect, including during a recording.
+3. Toggle Look on/off while panning slowly. The creative preview should stay current, without growing delay. Try all presets. It is capped at 30 display fps even if recording at 60/120, and is not a color-managed HDR reference.
+4. Open Format → FPS. Test 24, 30 and 60 if offered. Confirm the Info line and JSON match the selected rate. Verify actual frame rate externally from the original MOV. Format/rate changes are disabled during recording.
+5. Open Clips. Play a clip with sound; save/share it. Check sizes and free space. Delete only a disposable clip after confirming the prompt; ensure its MOV and JSON vanish from Files and that Photos copies remain.
+6. Open Connection and allow Local Network access. Connect and choose an actual Film Engine project. From Clips, send a short disposable take. Confirm its MOV and JSON appear in that project's Clips folder and its asset is listed in Film Engine. Local originals should remain.
+7. Send the same clip again to the same project. It should not create a duplicate asset or overwrite unrelated files. Try with the Mac unavailable: the phone should report failure, retain its local clip, and allow a retry later.
+8. Enable automatic sending, record two short takes in succession, and confirm each reaches the chosen project. Keep the app open during transfers. Disable automatic sending and confirm subsequent takes remain local.
+9. Enter a distinctive scene/shot/take and notes in Slate. Record twice; check each JSON contains its own slate, FPS/profile and look. No slate text should appear in the video itself.
 
-## Known limitations / no-go conditions
-- Unsigned iPhone build passed in Xcode 26.1 on November 1, 2026; signed build and wireless installation succeeded using team W7QXFS7XBU. iOS developer trust and on-device capture verification remain pending.
-- 10-bit capture and color tags are configured/inspected, not yet independently verified from a physical device.
-- Preview processing is experimental, computationally heavy, approximate, and not an HDR reference monitor; turn it off if unstable.
-- Manual ISO range is UI-generic; AVFoundation clamps to active sensor's capabilities.
-- No calibrated false color, waveform, zebra, focus peaking, raw pipeline, or reference-image overlay yet.
-- ProRes RAW and Apple Log 2 negotiation are separate future work.
-- The JSON sidecar is saved alongside the MOV in app Documents, **not** copied to Photos.
-- Files visible in Photos may be transcoded by external sharing services: retrieve untouched MOV from Files when inspecting.
+Retrieve the untouched MOV from Files or Film Engine for codec/bit-depth verification in Resolve or ffprobe. Photos sharing may transcode a clip. Report profile, FPS, orientation, monitor state and the action immediately preceding any failure.

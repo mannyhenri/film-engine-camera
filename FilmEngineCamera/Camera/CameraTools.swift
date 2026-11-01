@@ -9,7 +9,7 @@ struct ManualExposure: Equatable {
 
 extension CameraController {
     func setExposure(iso: Float, shutterDenominator: Int32) {
-        guard isReady, !isRecording, !isConfiguring else { return }
+        guard isReady, !isConfiguring else { return }
         sessionQueue.async { [weak self] in
             guard let self, let device = self.capture.videoDevice else { return }
             do {
@@ -18,7 +18,8 @@ extension CameraController {
                 guard device.isExposureModeSupported(.custom), shutterDenominator > 0 else { return }
                 let clampedISO = max(device.activeFormat.minISO, min(device.activeFormat.maxISO, iso))
                 let requested = CMTime(value: 1, timescale: shutterDenominator)
-                let duration = CMTimeMaximum(device.activeFormat.minExposureDuration, CMTimeMinimum(device.activeFormat.maxExposureDuration, requested))
+                let maximum = CMTimeMinimum(device.activeFormat.maxExposureDuration, device.activeVideoMaxFrameDuration)
+                let duration = CMTimeMaximum(device.activeFormat.minExposureDuration, CMTimeMinimum(maximum, requested))
                 device.setExposureModeCustom(duration: duration, iso: clampedISO)
                 Task { @MainActor in
                     self.manualExposure = ManualExposure(iso: clampedISO, shutterDenominator: shutterDenominator, locked: true)
@@ -28,7 +29,7 @@ extension CameraController {
     }
 
     func setAutoExposure() {
-        guard isReady, !isRecording, !isConfiguring else { return }
+        guard isReady, !isConfiguring else { return }
         sessionQueue.async { [weak self] in
             guard let self, let device = self.capture.videoDevice else { return }
             do {
@@ -41,7 +42,7 @@ extension CameraController {
     }
 
     func setWhiteBalance(kelvin: Float) {
-        guard isReady, !isRecording, !isConfiguring else { return }
+        guard isReady, !isConfiguring else { return }
         sessionQueue.async { [weak self] in
             guard let self, let device = self.capture.videoDevice, device.isWhiteBalanceModeSupported(.locked) else { return }
             do {
@@ -57,7 +58,7 @@ extension CameraController {
     }
 
     func setFocus(_ normalizedLensPosition: Float) {
-        guard isReady, !isRecording, !isConfiguring else { return }
+        guard isReady, !isConfiguring else { return }
         sessionQueue.async { [weak self] in
             guard let self, let device = self.capture.videoDevice, device.isFocusModeSupported(.locked), device.isLockingFocusWithCustomLensPositionSupported else { return }
             do {
@@ -70,7 +71,7 @@ extension CameraController {
     }
 
     func setZoom(_ factor: CGFloat) {
-        guard isReady, !isRecording, !isConfiguring else { return }
+        guard isReady, !isConfiguring else { return }
         sessionQueue.async { [weak self] in
             guard let self, let device = self.capture.videoDevice else { return }
             do {
