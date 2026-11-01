@@ -54,3 +54,5 @@ Uploads display percentage, bytes sent, average MB/s and approximate remaining t
 Verification: signed device and simulator builds pass; portrait and landscape spacing and ratio selection inspected in Simulator; 7 frame-timecode tests and 4 companion tests pass. A user-uploaded 1.03 GB / 13.5-second original was found and probed successfully in Blade Eternal's Clips folder: 4K, ProRes, 10-bit 4:2:2, 24 fps. Two later uploads failed (one HTTP 400 with no original reason logged; one phone-side connection reset). Explicit size headers and improved diagnostics are included; retry validation on the phone is still required.
 
 Timecode regression check: `swiftc FilmEngineCamera/Camera/RecordingTimecode.swift tests/TimecodeTests.swift -o /tmp/fe-timecode-tests && /tmp/fe-timecode-tests`.
+
+Clean View: tap the crossed-eye button in the top bar to hide every menu, status overlay and composition guide. Record/Stop and the small Show Controls eye remain available. Toggle it while recording without interrupting the take.

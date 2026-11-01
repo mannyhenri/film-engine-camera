@@ -52,6 +52,7 @@ struct CameraView: View {
     @State private var panel: CameraPanel?
     @State private var showGuides = true
     @State private var showGrid = false
+    @State private var cleanView = false
     @AppStorage("guide.aspect") private var guideAspect = "2.39:1"
     private let aspects: [(String, Double)] = [("16:9", 16.0/9), ("1.85:1", 1.85), ("2:1", 2), ("2.39:1", 2.39), ("4:3", 4.0/3), ("1:1", 1), ("4:5", 0.8), ("9:16", 9.0/16)]
     @State private var showClips = false
@@ -67,6 +68,20 @@ struct CameraView: View {
                     Image(decorative: frame, scale: 1).resizable().scaledToFill()
                         .frame(width: geo.size.width, height: geo.size.height).clipped().allowsHitTesting(false)
                 }
+                if cleanView {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Button { cleanView = false } label: {
+                                Image(systemName: "eye").font(.system(size: 17))
+                                    .frame(width: 44, height: 44)
+                                    .background(.black.opacity(0.35), in: Circle())
+                            }.accessibilityLabel("Show controls")
+                        }
+                        Spacer()
+                        HStack { Spacer(); recordButton }.padding(10)
+                    }.padding(12)
+                } else {
                 compositionGuides(size: geo.size)
                 if landscape {
                     HStack(spacing: 10) {
@@ -100,11 +115,15 @@ struct CameraView: View {
                             Text(camera.isRecording ? "REC" : camera.isReady ? "READY" : "WAIT")
                                 .font(.system(size: 10, weight: .bold)).foregroundStyle(camera.isRecording ? .red : .white.opacity(0.7))
                         }
+                        Button { panel = nil; cleanView = true } label: {
+                            Image(systemName: "eye.slash").frame(width: 30, height: 36)
+                        }.accessibilityLabel("Clean view")
                     }.padding(.horizontal, 14).frame(height: 40)
                         .background(.black.opacity(0.65), in: RoundedRectangle(cornerRadius: 12))
                         .padding(.horizontal, 12).padding(.top, 4)
                     Spacer()
                 }.allowsHitTesting(true)
+                }
             }.foregroundStyle(.white)
         }
         .preferredColorScheme(.dark)
