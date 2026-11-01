@@ -68,21 +68,8 @@ struct CameraView: View {
                     Image(decorative: frame, scale: 1).resizable().scaledToFill()
                         .frame(width: geo.size.width, height: geo.size.height).clipped().allowsHitTesting(false)
                 }
-                if cleanView {
-                    VStack {
-                        HStack {
-                            Spacer()
-                            Button { cleanView = false } label: {
-                                Image(systemName: "eye").font(.system(size: 17))
-                                    .frame(width: 44, height: 44)
-                                    .background(.black.opacity(0.35), in: Circle())
-                            }.accessibilityLabel("Show controls")
-                        }
-                        Spacer()
-                        HStack { Spacer(); recordButton }.padding(10)
-                    }.padding(12)
-                } else {
                 compositionGuides(size: geo.size)
+                if !cleanView {
                 if landscape {
                     HStack(spacing: 10) {
                         toolRail(vertical: true)
@@ -99,9 +86,10 @@ struct CameraView: View {
                         toolRail(vertical: false).padding(.horizontal, 10)
                     }.padding(.bottom, 12)
                 }
+                }
                 VStack {
                     HStack(spacing: 12) {
-                        Button { panel = panel == .info ? nil : .info } label: {
+                        Button { if !cleanView { panel = panel == .info ? nil : .info } } label: {
                             Text("FE Camera").font(.system(size: 12, weight: .bold))
                         }.accessibilityLabel("Camera status")
                         Spacer(minLength: 4)
@@ -109,21 +97,24 @@ struct CameraView: View {
                             .monospacedDigit().fixedSize().foregroundStyle(camera.isRecording ? .red : .white)
                             .accessibilityLabel("Elapsed timecode")
                         Spacer(minLength: 4)
-                        if engine.uploadingFile != nil {
+                        if engine.uploadingFile != nil && !cleanView && !camera.isRecording {
                             Button { showConnection = true } label: { Text("↑ \(Int(engine.uploadProgress * 100))%").font(.caption.monospaced()) }
                         } else {
-                            Text(camera.isRecording ? "REC" : camera.isReady ? "READY" : "WAIT")
-                                .font(.system(size: 10, weight: .bold)).foregroundStyle(camera.isRecording ? .red : .white.opacity(0.7))
+                            Button { camera.toggleRecording() } label: {
+                                Text(camera.isRecording ? "REC" : camera.isReady ? "READY" : "WAIT")
+                                    .font(.system(size: 10, weight: .bold)).foregroundStyle(camera.isRecording ? .red : .white.opacity(0.7))
+                                    .frame(minWidth: 36, minHeight: 36)
+                            }.accessibilityLabel(camera.isRecording ? "Stop recording" : "Start recording")
+                                .disabled(!camera.isReady || camera.isConfiguring)
                         }
-                        Button { panel = nil; cleanView = true } label: {
-                            Image(systemName: "eye.slash").frame(width: 30, height: 36)
-                        }.accessibilityLabel("Clean view")
+                        Button { panel = nil; cleanView.toggle() } label: {
+                            Image(systemName: cleanView ? "eye" : "eye.slash").frame(width: 30, height: 36)
+                        }.accessibilityLabel(cleanView ? "Show controls" : "Clean view")
                     }.padding(.horizontal, 14).frame(height: 40)
                         .background(.black.opacity(0.65), in: RoundedRectangle(cornerRadius: 12))
                         .padding(.horizontal, 12).padding(.top, 4)
                     Spacer()
                 }.allowsHitTesting(true)
-                }
             }.foregroundStyle(.white)
         }
         .preferredColorScheme(.dark)

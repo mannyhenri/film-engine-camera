@@ -55,4 +55,4 @@ Verification: signed device and simulator builds pass; portrait and landscape sp
 
 Timecode regression check: `swiftc FilmEngineCamera/Camera/RecordingTimecode.swift tests/TimecodeTests.swift -o /tmp/fe-timecode-tests && /tmp/fe-timecode-tests`.
 
-Clean View: tap the crossed-eye button in the top bar to hide every menu, status overlay and composition guide. Record/Stop and the small Show Controls eye remain available. Toggle it while recording without interrupting the take.
+Clean View: tap the crossed-eye button to hide the side/bottom controls and open panels. The top bar, elapsed frame timecode and enabled framing/grid guides remain visible. Tap READY/REC in the top bar to start/stop; the eye restores controls. Toggling Clean View does not interrupt recording.

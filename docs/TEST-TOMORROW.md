@@ -22,4 +22,4 @@ Retrieve the untouched MOV from Files or Film Engine for codec/bit-depth verific
 - Record past one minute and confirm HH:MM:SS:frames rolls over properly.
 - Retry the failed clips while keeping the phone app open. Watch percent, MB/s and time remaining; wait for the final MOV + JSON confirmation. If it fails, copy the exact error from Connection.
 
-- Tap Clean View before and during a take. Confirm all menus, timecode and guides disappear, Record/Stop remains usable, and the eye restores the controls without stopping the recording.
+- Tap Clean View before and during a take. Confirm the menus disappear while the top bar, timecode and enabled guides remain. READY/REC in the top bar must start/stop recording, and the eye must restore controls without interrupting a take.
