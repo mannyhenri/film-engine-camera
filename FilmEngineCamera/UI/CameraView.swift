@@ -53,6 +53,7 @@ struct CameraView: View {
     @State private var showGuides = true
     @State private var showGrid = false
     @State private var cleanView = false
+    @State private var showFocusPuller = true
     @AppStorage("guide.aspect") private var guideAspect = "2.39:1"
     private let aspects: [(String, Double)] = [("16:9", 16.0/9), ("1.85:1", 1.85), ("2:1", 2), ("2.39:1", 2.39), ("4:3", 4.0/3), ("1:1", 1), ("4:5", 0.8), ("9:16", 9.0/16)]
     @State private var showClips = false
@@ -74,6 +75,7 @@ struct CameraView: View {
                     HStack(spacing: 10) {
                         toolRail(vertical: true)
                         if let panel { panelView(panel).frame(width: min(300, geo.size.width * 0.4), height: max(120, geo.size.height - 86)) }
+                        if showFocusPuller { followFocusStrip.frame(width: min(220, geo.size.width * 0.27)) }
                         Spacer(minLength: 0)
                         VStack { libraryButton; connectionButton; Spacer(); recordButton; Spacer(); Text("\(camera.fps) FPS").font(.caption2.monospaced()) }
                             .padding(8).background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 16))
@@ -82,6 +84,7 @@ struct CameraView: View {
                     VStack(spacing: 8) {
                         Spacer(minLength: 0)
                         if let panel { panelView(panel).frame(maxWidth: 360).frame(height: min(214, geo.size.height * 0.30)).padding(.horizontal, 12) }
+                        if showFocusPuller { followFocusStrip.padding(.horizontal, 12) }
                         HStack { HStack(spacing: 4) { libraryButton; connectionButton }.frame(maxWidth: .infinity); recordButton; VStack(spacing: 4) { Text("\(camera.fps) FPS"); Text(guideAspect) }.font(.caption.monospaced()).frame(maxWidth: .infinity) }.padding(.horizontal, 12).padding(.vertical, 10)
                         toolRail(vertical: false).padding(.horizontal, 10)
                     }.padding(.bottom, 12)
@@ -129,6 +132,23 @@ struct CameraView: View {
         .sheet(isPresented: $showClips) { ClipLibraryView(library: library, engine: engine, camera: camera) }
         .sheet(isPresented: $showConnection) { EngineConnectionView(engine: engine) }
     }
+    private var followFocusStrip: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Label("FOLLOW FOCUS", systemImage: "viewfinder").font(.caption2.bold())
+                Spacer()
+                Text(String(format: "%.0f%%", camera.focusPosition * 100)).font(.caption.monospacedDigit())
+            }
+            Slider(value: Binding(get: { Double(camera.focusPosition) },
+                                  set: { camera.setFocus(Float($0)) }), in: 0...1)
+                .accessibilityLabel("Manual focus while recording")
+            HStack { Text("NEAR"); Spacer(); Text("FAR") }
+                .font(.system(size: 9)).foregroundStyle(.white.opacity(0.7))
+        }
+        .padding(9).background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 12))
+        .tint(.yellow)
+    }
+
     private var recordButton: some View {
         Button { camera.toggleRecording() } label: {
             Circle().fill(camera.isRecording ? .red : .white).frame(width: 54, height: 54)
@@ -181,12 +201,24 @@ struct CameraView: View {
                     switch selected {
                     case .exposure: ExposureControls(camera: camera)
                     case .focus:
-                        Text("Manual lens position")
+                        Toggle("Show follow-focus slider", isOn: $showFocusPuller)
+                        Text("Manual lens position · adjustable during recording")
                         Slider(value: Binding(get: { Double(camera.focusPosition) }, set: { camera.setFocus(Float($0)) }), in: 0...1)
                     case .whiteBalance:
                         Text("\(Int(camera.whiteBalanceKelvin)) K")
                         Slider(value: Binding(get: { Double(camera.whiteBalanceKelvin) }, set: { camera.setWhiteBalance(kelvin: Float($0)) }), in: 2500...9000, step: 100)
                     case .zoom:
+                        Text("CINEMA LENS FRAMING").font(.caption.bold())
+                        HStack(spacing: 4) {
+                            ForEach([("Wide", 1.0), ("35mm", 1.5), ("50mm", 2.1), ("85mm", 3.5)], id: \.0) { preset in
+                                Button { camera.setZoom(min(preset.1, camera.maxZoom)) } label: {
+                                    Text(preset.0).font(.caption2.bold())
+                                        .frame(maxWidth: .infinity, minHeight: 34)
+                                        .background(abs(camera.zoomFactor - preset.1) < 0.06 ? Color.pink : Color.gray.opacity(0.4), in: RoundedRectangle(cornerRadius: 7))
+                                }.disabled(preset.1 > camera.maxZoom)
+                            }
+                        }
+                        Text("Virtual lens framing uses digital crop, not an optical lens change. Preset millimeters are approximate.").font(.caption2)
                         Text(String(format: "%.1f×", camera.zoomFactor))
                         Slider(value: Binding(get: { camera.zoomFactor }, set: { camera.setZoom($0) }), in: 1...max(1.01, camera.maxZoom), step: 0.1)
                     case .format:
